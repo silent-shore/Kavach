@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KAVACH-NET</title>
+<script src="https://unpkg.com/vis-network@9.1.9/standalone/umd/vis-network.min.js"></script>
+<style>
+/* =========================================================
+   KAVACH-NET STYLES
+   Change theme colors here (search "THEME COLORS")
+========================================================= */
+:root{
+  /* ---- THEME COLORS ---- */
+  --bg-0:#0b1220;
+  --bg-1:#0f1a2e;
+  --bg-2:#16233d;
+  --bg-3:#1c2d4a;
+  --border:#26365a;
+  --accent:#3fd0ff;
+  --accent-2:#7c5cff;
+  --text-0:#eaf2ff;
+  --text-1:#9fb3d1;
+  --text-2:#6d80a3;
+  --danger:#ff5470;
+  --warn:#ffb84d;
+  --ok:#3fe0a6;
+}
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  font-family:'Segoe UI',Roboto,Arial,sans-serif;
+  background:var(--bg-0);
+  color:var(--text-0);
+}
+#app{display:flex;min-height:100vh;}
+
+/* ---------- Sidebar ---------- */
+#sidebar{
+  width:230px;
+  background:var(--bg-1);
+  border-right:1px solid var(--border);
+  padding:20px 0;
+  display:flex;
+  flex-direction:column;
+  position:sticky;
+  top:0;
+  height:100vh;
+}
+.brand{padding:0 20px 20px 20px;border-bottom:1px solid var(--border);margin-bottom:14px;}
+.brand h1{
+  font-size:20px;margin:0;letter-spacing:1px;
+  color:var(--accent);
+}
+.brand span{font-size:11px;color:var(--text-2);}
+.navitem{
+  padding:12px 20px;
+  cursor:pointer;
+  color:var(--text-1);
+  font-size:14px;
+  border-left:3px solid transparent;
+  user-select:none;
+}
+.navitem:hover{background:var(--bg-2);color:var(--text-0);}
+.navitem.active{
+  background:var(--bg-2);
+  border-left:3px solid var(--accent);
+  color:var(--accent);
+  font-weight:600;
+}
+.navnotice{
+  margin-top:auto;padding:14px 16px;font-size:11px;color:var(--text-2);
+  border-top:1px solid var(--border);
+}
+
+/* ---------- Main ---------- */
+#main{flex:1;padding:26px 34px;max-width:100%;overflow-x:hidden;}
+.pagehead{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:10px;}
+.pagehead h2{margin:0;font-size:22px;}
+.pagehead p{margin:2px 0 0 0;color:var(--text-1);font-size:13px;}
+
+.searchbar{
+  display:flex;align-items:center;gap:8px;background:var(--bg-1);
+  border:1px solid var(--border);border-radius:8px;padding:8px 12px;min-width:260px;
+}
+.searchbar input{
+  flex:1;background:transparent;border:none;outline:none;color:var(--text-0);font-size:13px;
+}
+
+.section{display:none;}
+.section.active{display:block;}
+
+/* ---------- Cards / stats ---------- */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:22px;}
+.stat-card{
+  background:linear-gradient(145deg,var(--bg-1),var(--bg-2));
+  border:1px solid var(--border);border-radius:10px;padding:16px 18px;
+}
+.stat-card .num{font-size:28px;font-weight:700;color:var(--accent);}
+.stat-card .lbl{font-size:12px;color:var(--text-1);margin-top:4px;}
+.stat-card.alertnum .num{color:var(--danger);}
+
+.card{
+  background:var(--bg-1);border:1px solid var(--border);border-radius:10px;
+  padding:18px 20px;margin-bottom:18px;
+}
+.card h3{margin:0 0 12px 0;font-size:15px;color:var(--text-0);}
+
+.notice{
+  background:rgba(255,184,77,0.08);border:1px solid var(--warn);
+  border-radius:8px;padding:12px 16px;font-size:12.5px;color:var(--text-0);margin-bottom:18px;
+  line-height:1.5;
+}
+.notice b{color:var(--warn);}
+
+/* ---------- Buttons ---------- */
+button{
+  cursor:pointer;border:1px solid var(--border);background:var(--bg-2);
+  color:var(--text-0);border-radius:7px;padding:8px 14px;font-size:13px;
+}
+button:hover{border-color:var(--accent);color:var(--accent);}
+button.primary{background:var(--accent);color:#04121f;border:none;font-weight:600;}
+button.primary:hover{opacity:.9;color:#04121f;}
+button.danger{border-color:var(--danger);color:var(--danger);}
+button.danger:hover{background:var(--danger);color:#fff;}
+button.small{padding:4px 10px;font-size:12px;}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
+
+/* ---------- Table ---------- */
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th,td{padding:9px 10px;border-bottom:1px solid var(--border);text-align:left;}
+th{color:var(--text-1);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.5px;}
+tr:hover td{background:var(--bg-2);}
+td input,td select{
+  width:100%;background:var(--bg-0);border:1px solid var(--border);border-radius:5px;
+  color:var(--text-0);padding:5px 7px;font-size:12.5px;
+}
+.tag{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;}
+.tag.person{background:#20395f;color:#7fd0ff;}
+.tag.phone{background:#3a2a54;color:#c69bff;}
+.tag.location{background:#2a4a3a;color:#7fe0b0;}
+.tag.vehicle{background:#4a3a20;color:#ffcb7f;}
+.tag.organization{background:#4a2030;color:#ff9ab5;}
+.tag.case{background:#203548;color:#8fc6ff;}
+.tag.bankaccount{background:#2f2f52;color:#c3c3ff;}
+.tag.other{background:#333;color:#ccc;}
+
+textarea{
+  width:100%;min-height:110px;background:var(--bg-0);border:1px solid var(--border);
+  border-radius:7px;color:var(--text-0);padding:10px;font-size:13px;font-family:inherit;resize:vertical;
+}
+
+/* ---------- Two column layout for network page ---------- */
+.netlayout{display:flex;gap:16px;flex-wrap:wrap;}
+#graphbox{
+  flex:2;min-width:320px;height:560px;background:var(--bg-1);
+  border:1px solid var(--border);border-radius:10px;position:relative;
+}
+#network{width:100%;height:100%;border-radius:10px;}
+#detailpanel{flex:1;min-width:280px;max-height:560px;overflow-y:auto;}
+
+.chip-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;}
+.chip{
+  background:var(--bg-2);border:1px solid var(--border);border-radius:20px;
+  padding:4px 10px;font-size:12px;color:var(--text-1);cursor:pointer;
+}
+.chip:hover{color:var(--accent);border-color:var(--accent);}
+
+/* ---------- Alerts ---------- */
+.alert-card{
+  border-left:4px solid var(--warn);background:var(--bg-1);border:1px solid var(--border);
+  border-left-width:4px;border-left-color:var(--warn);border-radius:8px;padding:14px 16px;margin-bottom:12px;
+}
+.alert-card.high{border-left-color:var(--danger);}
+.alert-title{font-weight:700;font-size:14px;color:var(--text-0);}
+.alert-sub{font-size:12.5px;color:var(--text-1);margin:4px 0 10px 0;}
+.evidence-box{
+  display:none;background:var(--bg-0);border:1px dashed var(--border);border-radius:6px;
+  padding:12px;margin-top:10px;font-size:12.5px;line-height:1.6;
+}
+.evidence-box.show{display:block;}
+
+/* ---------- Entity / Case lists ---------- */
+.list-item{
+  padding:10px 12px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px;
+  background:var(--bg-1);cursor:pointer;display:flex;justify-content:space-between;align-items:center;
+}
+.list-item:hover{border-color:var(--accent);}
+.list-item .left b{color:var(--text-0);}
+.list-item .left .sub{font-size:11.5px;color:var(--text-2);}
+
+.empty{color:var(--text-2);font-size:13px;padding:16px;text-align:center;}
+
+.small-muted{color:var(--text-2);font-size:12px;}
+
+@media(max-width:800px){
+  #app{flex-direction:column;}
+  #sidebar{width:100%;height:auto;position:relative;flex-direction:row;overflow-x:auto;padding:10px;}
+  .brand{display:none;}
+  .navnotice{display:none;}
+  #main{padding:16px;}
+}
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ============ SIDEBAR ============ -->
+  <div id="sidebar">
+    <div class="brand">
+      <h1 id="brandName">KAVACH-NET</h1>
+      <span>Investigation Intelligence</span>
+    </div>
+    <div class="navitem active" data-page="dashboard">Dashboard</div>
+    <div class="navitem" data-page="data">Investigation Data</div>
+    <div class="navitem" data-page="network">Network Analysis</div>
+    <div class="navitem" data-page="entities">Entities</div>
+    <div class="navitem" data-page="cases">Cases</div>
+    <div class="navitem" data-page="alerts">Alerts</div>
+    <div class="navitem" data-page="about">About</div>
+    <div class="navnotice">All alerts are investigative leads only. Human review required before any action.</div>
+  </div>
+
+  <!-- ============ MAIN ============ -->
+  <div id="main">
+
+    <!-- ---------- DASHBOARD ---------- -->
+    <div class="section active" id="page-dashboard">
+      <div class="pagehead">
+        <div>
+          <h2 id="dashTitle">KAVACH-NET</h2>
+          <p>AI-Powered Criminal Network Analysis &amp; Investigation Intelligence</p>
+        </div>
+        <div class="searchbar">
+          <span>🔎</span>
+          <input id="globalSearch" placeholder="Search entity, phone, case, vehicle..." onkeyup="onGlobalSearch(event)">
+        </div>
+      </div>
+
+      <div class="notice">
+        <b>Investigation Support Notice:</b> KAVACH-NET identifies potentially significant relationships and patterns from available data. It does not determine guilt or criminal responsibility. All alerts require investigator review and verification.
+      </div>
+
+      <div class="stats-grid" id="statsGrid"></div>
+
+      <div id="globalSearchResults"></div>
+
+      <div class="card">
+        <h3>Quick Start</h3>
+        <div class="btnrow">
+          <button class="primary" onclick="goPage('data')">➕ Add Investigation Data</button>
+          <button onclick="goPage('network')">🕸 View Network</button>
+          <button onclick="goPage('alerts')">⚠ View Alerts</button>
+        </div>
+        <p class="small-muted">Demo flow: Investigation Data → Analyze → Network Analysis → click an entity → Alerts → "Why flagged?"</p>
+      </div>
+    </div>
+
+    <!-- ---------- INVESTIGATION DATA ---------- -->
+    <div class="section" id="page-data">
+      <div class="pagehead">
+        <div><h2>Investigation Data</h2><p>Add, edit or import fragmented records. Nothing here is analyzed until you click Analyze Data.</p></div>
+      </div>
+
+      <div class="card">
+        <h3>Dataset Controls</h3>
+        <div class="btnrow">
+          <button class="primary" onclick="analyzeData()">▶ Analyze Data</button>
+          <button onclick="addBlankRow()">➕ Add Row</button>
+          <button onclick="loadDemoData()">📂 Load Demo Dataset</button>
+          <button onclick="resetDemo()">↺ Reset Demo</button>
+          <button class="danger" onclick="clearAllData()">🗑 Clear Data</button>
+          <label style="border:1px solid var(--border);border-radius:7px;padding:8px 14px;font-size:13px;cursor:pointer;">
+            📤 Upload CSV
+            <input type="file" accept=".csv" style="display:none" onchange="handleCSVUpload(event)">
+          </label>
+        </div>
+        <div id="dataMsg" class="small-muted"></div>
+      </div>
+
+      <div class="card">
+        <h3>Structured Records</h3>
+        <div style="overflow-x:auto;">
+          <table id="recordsTable">
+            <thead><tr>
+              <th>Case</th><th>Subject</th><th>Type</th><th>Relationship</th><th>Object</th><th>Type</th><th>Source</th><th></th>
+            </tr></thead>
+            <tbody id="recordsBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Paste Unstructured Text</h3>
+        <p class="small-muted">Paste free-text notes. KAVACH-NET uses rule-based extraction (no paid API needed) to pull out people, phone numbers, vehicles, locations and relationships.</p>
+        <textarea id="textInput" placeholder="e.g. Rahul contacted Amit using phone number 9876543210 near Connaught Place."></textarea>
+        <div class="btnrow" style="margin-top:10px;">
+          <button class="primary" onclick="analyzeText()">🧠 Analyze Text</button>
+        </div>
+        <div id="textExtractResult"></div>
+      </div>
+    </div>
+
+    <!-- ---------- NETWORK ---------- -->
+    <div class="section" id="page-network">
+      <div class="pagehead">
+        <div><h2>Network Analysis</h2><p>Click a node to inspect it. Scroll to zoom, drag to pan.</p></div>
+        <div class="btnrow" style="margin:0;">
+          <select id="filterType" onchange="renderGraph()">
+            <option value="">All Entity Types</option>
+          </select>
+          <select id="filterCase" onchange="renderGraph()">
+            <option value="">All Cases</option>
+          </select>
+          <label style="font-size:12px;color:var(--text-1);display:flex;align-items:center;gap:6px;">
+            <input type="checkbox" id="filterFlagged" onchange="renderGraph()"> Flagged only
+          </label>
+          <button onclick="resetGraphView()">⟲ Reset View</button>
+        </div>
+      </div>
+      <div class="netlayout">
+        <div id="graphbox"><div id="network"></div></div>
+        <div id="detailpanel">
+          <div class="card" id="detailCard">
+            <h3>Entity Details</h3>
+            <p class="empty">Click a node in the graph to see details here.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ---------- ENTITIES ---------- -->
+    <div class="section" id="page-entities">
+      <div class="pagehead"><div><h2>Entities</h2><p>All entities extracted from the current dataset.</p></div></div>
+      <div id="entitiesList"></div>
+    </div>
+
+    <!-- ---------- CASES ---------- -->
+    <div class="section" id="page-cases">
+      <div class="pagehead"><div><h2>Cases</h2><p>Case-level summary and cross-case links.</p></div></div>
+      <div id="casesList"></div>
+    </div>
+
+    <!-- ---------- ALERTS ---------- -->
+    <div class="section" id="page-alerts">
+      <div class="pagehead"><div><h2>Alerts</h2><p>Transparent, rule-based investigative indicators. Click "Why flagged?" to see the evidence.</p></div></div>
+      <div id="alertsList"></div>
+    </div>
+
+    <!-- ---------- ABOUT ---------- -->
+    <div class="section" id="page-about">
+      <div class="pagehead"><div><h2>About KAVACH-NET</h2></div></div>
+      <div class="card">
+        <h3>What this is</h3>
+        <p>KAVACH-NET (SIH26189) is an investigation-support prototype that turns fragmented crime-related records into an entity-relationship network, then applies transparent, explainable rules to surface leads an investigator should review.</p>
+        <p>Pipeline: <b>Input Data → Entity Extraction → Relationship Extraction → Entity Normalization → Network Graph → Graph Analysis → Pattern Detection → Investigator Insights.</b></p>
+      </div>
+      <div class="notice">
+        <b>Investigation Support Notice:</b> KAVACH-NET identifies potentially significant relationships and patterns from available data. It does not determine guilt or criminal responsibility. All alerts require investigator review and verification.
+      </div>
+      <div class="card">
+        <h3>All data on this screen is fictional</h3>
+        <p class="small-muted">Sample dataset is synthetic and created only for demonstration purposes.</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   KAVACH-NET APPLICATION LOGIC
+   ---------------------------------------------------------
+   HOW TO EDIT THIS APP — see README.md for full guide.
+   Quick pointers:
+   - App name:      CONFIG.APP_NAME below
+   - Sample data:   SAMPLE_DATA array below
+   - Alert rules:   the ALERT RULES section (search "ALERT RULES")
+   - Colors/theme:  the :root{} block in <style> above
+========================================================= */
+
+// ---------------------------------------------------------
+// 1. CONFIG  (change the app name in ONE place)
+// ---------------------------------------------------------
+const CONFIG = {
+  APP_NAME: "KAVACH-NET",
+  SUBTITLE: "AI-Powered Criminal Network Analysis & Investigation Intelligence",
+  HIGH_CONNECTIVITY_THRESHOLD: 4 // used by Rule 2 below
+};
+document.title = CONFIG.APP_NAME;
+document.getElementById('brandName').textContent = CONFIG.APP_NAME;
+document.getElementById('dashTitle').textContent = CONFIG.APP_NAME;
+
+// ---------------------------------------------------------
+// 2. SAMPLE / DEMO DATA  (entirely fictional)
+// ---------------------------------------------------------
+const SAMPLE_DATA = [
+  {case_id:"C001", subject:"Rahul",  subject_type:"Person",  relationship:"called",       object:"Phone-101",  object_type:"Phone",     source:"CDR"},
+  {case_id:"C001", subject:"Rahul",  subject_type:"Person",  relationship:"knows",        object:"Amit",       object_type:"Person",    source:"FIR"},
+  {case_id:"C001", subject:"Rahul",  subject_type:"Person",  relationship:"located at",   object:"Connaught Place", object_type:"Location", source:"Surveillance"},
+  {case_id:"C002", subject:"Amit",   subject_type:"Person",  relationship:"met",          object:"Sameer",     object_type:"Person",    source:"Surveillance"},
+  {case_id:"C002", subject:"Sameer", subject_type:"Person",  relationship:"used",         object:"Phone-101",  object_type:"Phone",     source:"CDR"},
+  {case_id:"C002", subject:"Amit",   subject_type:"Person",  relationship:"located at",   object:"Connaught Place", object_type:"Location", source:"CCTV"},
+  {case_id:"C003", subject:"Sameer", subject_type:"Person",  relationship:"transferred money", object:"Arjun", object_type:"Person",  source:"Bank Records"},
+  {case_id:"C003", subject:"Arjun",  subject_type:"Person",  relationship:"associated with", object:"Vehicle-01", object_type:"Vehicle", source:"RTO"},
+  {case_id:"C003", subject:"Sameer", subject_type:"Person",  relationship:"owns",         object:"Vehicle-01", object_type:"Vehicle",   source:"RTO"},
+  {case_id:"C004", subject:"Arjun",  subject_type:"Person",  relationship:"knows",        object:"Priya",      object_type:"Person",    source:"FIR"},
+  {case_id:"C004", subject:"Priya",  subject_type:"Person",  relationship:"called",       object:"Phone-205",  object_type:"Phone",     source:"CDR"},
+  {case_id:"C004", subject:"Arjun",  subject_type:"Person",  relationship:"associated with", object:"Organization-Nova", object_type:"Organization", source:"MCA Records"},
+  {case_id:"C002", subject:"Sameer", subject_type:"Person",  relationship:"associated with", object:"Organization-Nova", object_type:"Organization", source:"Surveillance"},
+];
+
+// ---------------------------------------------------------
+// 3. DATA STORE (localStorage-backed)
+// ---------------------------------------------------------
+const STORAGE_KEY = "kavachnet_records_v1";
+let records = [];          // current working dataset (array of record objects)
+let entities = {};         // computed entity map {id: {...}}
+let alerts = [];           // computed alerts list
+let selectedEntityId = null;
+let network = null;        // vis-network instance
+
+function loadData(){
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if(raw){
+    try{ records = JSON.parse(raw); }
+    catch(e){ records = SAMPLE_DATA.slice(); }
+  } else {
+    records = SAMPLE_DATA.slice();
+  }
+}
+function saveData(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+}
+function loadDemoData(){
+  // merges demo data in without wiping user rows, avoiding exact duplicates
+  SAMPLE_DATA.forEach(r=>{
+    const exists = records.some(x => x.case_id===r.case_id && x.subject===r.subject && x.relationship===r.relationship && x.object===r.object);
+    if(!exists) records.push(Object.assign({}, r));
+  });
+  saveData(); analyzeData("Demo dataset loaded.");
+}
+function resetDemo(){
+  records = SAMPLE_DATA.map(r=>Object.assign({}, r));
+  saveData(); analyzeData("Dataset reset to original demo data.");
+}
+function clearAllData(){
+  if(!confirm("Clear all investigation data? This cannot be undone.")) return;
+  records = [];
+  saveData(); analyzeData("All data cleared.");
+}
+
+// ---------------------------------------------------------
+// 4. ENTITY / GRAPH BUILDING
+// ---------------------------------------------------------
+function entityId(name, type){
+  return (type||"other").toLowerCase()+"::"+String(name).trim().toLowerCase();
+}
+function entityTypeClass(type){
+  return (type||"other").toLowerCase().replace(/\s+/g,'');
+}
+
+function buildEntities(){
+  entities = {};
+  function ensure(name, type){
+    if(!name) return null;
+    const id = entityId(name, type);
+    if(!entities[id]){
+      entities[id] = {
+        id, name: String(name).trim(), type: type || "Other",
+        cases: new Set(), connections: new Set(), relationships: []
+      };
+    }
+    return entities[id];
+  }
+  records.forEach((r, idx) => {
+    if(!r.subject || !r.object) return; // skip incomplete records safely
+    const s = ensure(r.subject, r.subject_type || "Person");
+    const o = ensure(r.object, r.object_type || "Other");
+    const c = ensure(r.case_id, "Case");
+    if(!s || !o) return;
+    s.cases.add(r.case_id); o.cases.add(r.case_id);
+    s.connections.add(o.id); o.connections.add(s.id);
+    s.relationships.push({type:'out', rel:r.relationship, other:o.name, otherId:o.id, case_id:r.case_id, source:r.source, idx});
+    o.relationships.push({type:'in', rel:r.relationship, other:s.name, otherId:s.id, case_id:r.case_id, source:r.source, idx});
+    if(c){
+      c.connections.add(s.id); c.connections.add(o.id);
+      s.connections.add(c.id); o.connections.add(c.id);
+    }
+  });
+  return entities;
+}
+
+// ---------------------------------------------------------
+// 5. ALERT RULES  (edit thresholds / text here)
+// ---------------------------------------------------------
+function computeAlerts(){
+  alerts = [];
+  const ents = Object.values(entities);
+
+  // Rule 1 — Cross-case entity
+  ents.forEach(e=>{
+    if(e.type==="Case") return;
+    if(e.cases.size >= 2){
+      alerts.push({
+        id: "cross-"+e.id, level:"high", entity: e.id,
+        title: "CROSS-CASE CONNECTION",
+        subtitle: `${e.name} appears in ${e.cases.size} investigation cases.`,
+        reasonType: "Cross-case connectivity",
+        evidence: {
+          entity: e.name,
+          summary: `This entity appears in records across ${e.cases.size} separate cases.`,
+          cases: Array.from(e.cases),
+          connections: Array.from(e.connections).map(id=>entities[id]?entities[id].name:id).filter(n=>n)
+        }
+      });
+    }
+  });
+
+  // Rule 2 — Highly connected entity
+  ents.forEach(e=>{
+    if(e.type==="Case") return;
+    if(e.connections.size >= CONFIG.HIGH_CONNECTIVITY_THRESHOLD){
+      alerts.push({
+        id:"hc-"+e.id, level:"medium", entity:e.id,
+        title:"HIGH CONNECTIVITY",
+        subtitle:`${e.name} has ${e.connections.size} direct connections — unusually high network connectivity.`,
+        reasonType:"High connectivity",
+        evidence:{
+          entity:e.name,
+          summary:`This entity has ${e.connections.size} direct connections in the network, above the threshold of ${CONFIG.HIGH_CONNECTIVITY_THRESHOLD}.`,
+          cases: Array.from(e.cases),
+          connections: Array.from(e.connections).map(id=>entities[id]?entities[id].name:id).filter(n=>n)
+        }
+      });
+    }
+  });
+
+  // Rule 3 — Shared phone number
+  ents.filter(e=>e.type==="Phone").forEach(e=>{
+    const linkedPeople = new Set();
+    e.relationships.forEach(r=>{ if(entities[r.otherId] && entities[r.otherId].type==="Person") linkedPeople.add(r.otherId); });
+    if(linkedPeople.size >= 2 || e.cases.size >= 2){
+      alerts.push({
+        id:"phone-"+e.id, level:"high", entity:e.id,
+        title:"SHARED COMMUNICATION IDENTIFIER",
+        subtitle:`${e.name} is linked to ${linkedPeople.size} people across ${e.cases.size} case(s).`,
+        reasonType:"Shared phone number",
+        evidence:{
+          entity:e.name,
+          summary:`This identifier is associated with ${linkedPeople.size} distinct people and appears in ${e.cases.size} case(s).`,
+          cases: Array.from(e.cases),
+          connections: Array.from(linkedPeople).map(id=>entities[id].name)
+        }
+      });
+    }
+  });
+
+  // Rule 4 — Shared location
+  ents.filter(e=>e.type==="Location").forEach(e=>{
+    if(e.connections.size >= 2){
+      alerts.push({
+        id:"loc-"+e.id, level:"medium", entity:e.id,
+        title:"LOCATION OVERLAP",
+        subtitle:`${e.connections.size} entities are associated with ${e.name}.`,
+        reasonType:"Location overlap",
+        evidence:{
+          entity:e.name,
+          summary:`Multiple entities (${e.connections.size}) are linked to this location across ${e.cases.size} case(s).`,
+          cases: Array.from(e.cases),
+          connections: Array.from(e.connections).map(id=>entities[id]?entities[id].name:id).filter(n=>n)
+        }
+      });
+    }
+  });
+
+  // Rule 5 — Transaction chain
+  const txRecords = records.filter(r=> (r.relationship||"").toLowerCase().includes("transfer") || (r.relationship||"").toLowerCase().includes("payment"));
+  if(txRecords.length){
+    const involved = new Set();
+    txRecords.forEach(r=>{ involved.add(r.subject); involved.add(r.object); });
+    alerts.push({
+      id:"tx-chain", level: txRecords.length>=2 ? "high":"medium", entity:null,
+      title:"TRANSACTION CHAIN",
+      subtitle:`${txRecords.length} financial transfer record(s) connecting ${involved.size} entities.`,
+      reasonType:"Transaction chain",
+      evidence:{
+        entity:"Multiple entities",
+        summary:`${txRecords.length} transaction-type relationship(s) were found, connecting: ${Array.from(involved).join(", ")}.`,
+        cases: Array.from(new Set(txRecords.map(r=>r.case_id))),
+        connections: Array.from(involved)
+      }
+    });
+  }
+
+  return alerts;
+}
+
+// ---------------------------------------------------------
+// 6. RULE-BASED TEXT EXTRACTION (no paid API needed)
+// ---------------------------------------------------------
+function extractFromText(text){
+  const newRecords = [];
+  const found = {persons:new Set(), phones:new Set(), locations:new Set(), vehicles:new Set(), orgs:new Set()};
+
+  // Phone numbers: 10 digit sequences
+  (text.match(/\b\d{10}\b/g) || []).forEach(p=>found.phones.add(p));
+
+  // Vehicle numbers: e.g. DL01AB1234
+  (text.match(/\b[A-Z]{2}\d{2}[A-Z]{1,2}\d{3,4}\b/g) || []).forEach(v=>found.vehicles.add(v));
+
+  // Locations: "near X" / "at X" (capitalized phrase after near/at)
+  const locRegex = /\b(?:near|at|in)\s+([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+){0,3})/g;
+  let lm;
+  while((lm = locRegex.exec(text)) !== null){ found.locations.add(lm[1].trim()); }
+
+  // Organizations: word followed by Ltd/Pvt/Inc/Corp or "Organization-X"
+  const orgRegex = /\b([A-Z][a-zA-Z]+(?:\s[A-Z][a-zA-Z]+)?\s?(?:Ltd|Pvt|Inc|Corp|Company|Enterprises))\b/g;
+  let om;
+  while((om = orgRegex.exec(text)) !== null){ found.orgs.add(om[1].trim()); }
+
+  // Persons: capitalized single words not already classified as location/org, excluding sentence-start common words
+  const stop = new Set(["The","A","An","Near","At","In","Case","Phone","Vehicle"]);
+  (text.match(/\b[A-Z][a-z]{2,}\b/g) || []).forEach(w=>{
+    if(stop.has(w)) return;
+    const isPartOfLocation = Array.from(found.locations).some(l=>l.includes(w));
+    const isPartOfOrg = Array.from(found.orgs).some(o=>o.includes(w));
+    if(!isPartOfLocation && !isPartOfOrg) found.persons.add(w);
+  });
+
+  // Relationship keyword patterns: subject VERB object
+  const patterns = [
+    {re:/([A-Z][a-z]+)\s+(?:communicated with|contacted|called)\s+([A-Z][a-z]+)/g, rel:"called"},
+    {re:/([A-Z][a-z]+)\s+met\s+([A-Z][a-z]+)/g, rel:"met"},
+    {re:/([A-Z][a-z]+)\s+(?:knows|is associated with)\s+([A-Z][a-z]+)/g, rel:"knows"},
+    {re:/([A-Z][a-z]+)\s+(?:transferred money to|paid|sent money to)\s+([A-Z][a-z]+)/g, rel:"transferred money"},
+  ];
+  patterns.forEach(p=>{
+    let m;
+    while((m = p.re.exec(text)) !== null){
+      newRecords.push({case_id:"TEXT-IMPORT", subject:m[1], subject_type:"Person", relationship:p.rel, object:m[2], object_type:"Person", source:"Text Analysis"});
+    }
+  });
+  // Person -> phone (used)
+  found.persons.forEach(person=>{
+    found.phones.forEach(phone=>{
+      // only link if they appear reasonably close together in text
+      const idxP = text.indexOf(person), idxPh = text.indexOf(phone);
+      if(idxP>-1 && idxPh>-1 && Math.abs(idxP-idxPh) < 80){
+        newRecords.push({case_id:"TEXT-IMPORT", subject:person, subject_type:"Person", relationship:"used", object:"Phone-"+phone, object_type:"Phone", source:"Text Analysis"});
+      }
+    });
+  });
+  // Person -> location
+  found.persons.forEach(person=>{
+    found.locations.forEach(loc=>{
+      const idxP = text.indexOf(person), idxL = text.indexOf(loc);
+      if(idxP>-1 && idxL>-1 && Math.abs(idxP-idxL) < 80){
+        newRecords.push({case_id:"TEXT-IMPORT", subject:person, subject_type:"Person", relationship:"located near", object:loc, object_type:"Location", source:"Text Analysis"});
+      }
+    });
+  });
+  // Person -> vehicle
+  found.persons.forEach(person=>{
+    found.vehicles.forEach(v=>{
+      const idxP = text.indexOf(person), idxV = text.indexOf(v);
+      if(idxP>-1 && idxV>-1 && Math.abs(idxP-idxV) < 80){
+        newRecords.push({case_id:"TEXT-IMPORT", subject:person, subject_type:"Person", relationship:"associated with", object:"Vehicle-"+v, object_type:"Vehicle", source:"Text Analysis"});
+      }
+    });
+  });
+  // Person -> org
+  found.persons.forEach(person=>{
+    found.orgs.forEach(org=>{
+      const idxP = text.indexOf(person), idxO = text.indexOf(org);
+      if(idxP>-1 && idxO>-1 && Math.abs(idxP-idxO) < 100){
+        newRecords.push({case_id:"TEXT-IMPORT", subject:person, subject_type:"Person", relationship:"associated with", object:org, object_type:"Organization", source:"Text Analysis"});
+      }
+    });
+  });
+
+  return {found, newRecords};
+}
+
+// ---------------------------------------------------------
+// 7. CSV UPLOAD
+// ---------------------------------------------------------
+function handleCSVUpload(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      const lines = e.target.result.split(/\r?\n/).filter(l=>l.trim().length);
+      if(!lines.length){ setMsg("CSV file is empty."); return; }
+      const header = lines[0].split(",").map(h=>h.trim().toLowerCase());
+      let added = 0;
+      for(let i=1;i<lines.length;i++){
+        const cols = lines[i].split(",").map(c=>c.trim());
+        if(cols.length < 4) continue; // skip malformed rows safely
+        const rec = {};
+        header.forEach((h,idx)=>{ rec[h] = cols[idx] || ""; });
+        newRec = {
+          case_id: rec.case_id || "UNSPECIFIED",
+          subject: rec.subject || "",
+          subject_type: rec.subject_type || "Person",
+          relationship: rec.relationship || "related to",
+          object: rec.object || "",
+          object_type: rec.object_type || "Other",
+          source: rec.source || "CSV Upload"
+        };
+        if(newRec.subject && newRec.object){ records.push(newRec); added++; }
+      }
+      saveData();
+      analyzeData(`CSV imported: ${added} record(s) added.`);
+    }catch(err){
+      setMsg("Could not read CSV file. Please check the format.");
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = "";
+}
+
+// ---------------------------------------------------------
+// 8. RENDER: STATS / DASHBOARD
+// ---------------------------------------------------------
+function renderStats(){
+  const ents = Object.values(entities);
+  const persons = ents.filter(e=>e.type==="Person").length;
+  const cases = ents.filter(e=>e.type==="Case").length;
+  const flaggedEntities = new Set(alerts.filter(a=>a.entity).map(a=>a.entity)).size;
+  const html = `
+    <div class="stat-card"><div class="num">${ents.length}</div><div class="lbl">Total Entities</div></div>
+    <div class="stat-card"><div class="num">${persons}</div><div class="lbl">Persons</div></div>
+    <div class="stat-card"><div class="num">${cases}</div><div class="lbl">Cases</div></div>
+    <div class="stat-card"><div class="num">${records.length}</div><div class="lbl">Relationships</div></div>
+    <div class="stat-card alertnum"><div class="num">${flaggedEntities}</div><div class="lbl">Flagged Entities</div></div>
+  `;
+  document.getElementById('statsGrid').innerHTML = html;
+}
+
+// ---------------------------------------------------------
+// 9. RENDER: DATA TABLE
+// ---------------------------------------------------------
+function renderTable(){
+  const body = document.getElementById('recordsBody');
+  if(!records.length){
+    body.innerHTML = `<tr><td colspan="8" class="empty">No records yet. Load demo data or add a row.</td></tr>`;
+    return;
+  }
+  body.innerHTML = records.map((r, i)=>`
+    <tr>
+      <td><input value="${escapeHtml(r.case_id)}" onchange="updateRecord(${i},'case_id',this.value)"></td>
+      <td><input value="${escapeHtml(r.subject)}" onchange="updateRecord(${i},'subject',this.value)"></td>
+      <td><input value="${escapeHtml(r.subject_type||'')}" onchange="updateRecord(${i},'subject_type',this.value)" placeholder="Person"></td>
+      <td><input value="${escapeHtml(r.relationship)}" onchange="updateRecord(${i},'relationship',this.value)"></td>
+      <td><input value="${escapeHtml(r.object)}" onchange="updateRecord(${i},'object',this.value)"></td>
+      <td><input value="${escapeHtml(r.object_type||'')}" onchange="updateRecord(${i},'object_type',this.value)" placeholder="Other"></td>
+      <td><input value="${escapeHtml(r.source||'')}" onchange="updateRecord(${i},'source',this.value)"></td>
+      <td><button class="small danger" onclick="deleteRecord(${i})">✕</button></td>
+    </tr>
+  `).join("");
+}
+function updateRecord(i, field, value){
+  records[i][field] = value;
+  saveData();
+}
+function deleteRecord(i){
+  records.splice(i,1);
+  saveData();
+  analyzeData("Record deleted.");
+}
+function addBlankRow(){
+  records.push({case_id:"", subject:"", subject_type:"Person", relationship:"", object:"", object_type:"Other", source:""});
+  saveData();
+  renderTable();
+}
+function escapeHtml(str){
+  return String(str).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// ---------------------------------------------------------
+// 10. TEXT ANALYSIS UI
+// ---------------------------------------------------------
+function analyzeText(){
+  const text = document.getElementById('textInput').value.trim();
+  const resultBox = document.getElementById('textExtractResult');
+  if(!text){ resultBox.innerHTML = `<p class="empty">Paste some text first.</p>`; return; }
+  const {found, newRecords} = extractFromText(text);
+
+  let html = `<div class="card" style="margin-top:12px;"><h3>Extracted Entities</h3>`;
+  const chip = (label, cls) => `<span class="chip"><span class="tag ${cls}">${label}</span></span>`;
+  html += `<div class="chip-row">`;
+  found.persons.forEach(p=> html += chip(p,"person"));
+  found.phones.forEach(p=> html += chip(p,"phone"));
+  found.locations.forEach(p=> html += chip(p,"location"));
+  found.vehicles.forEach(p=> html += chip(p,"vehicle"));
+  found.orgs.forEach(p=> html += chip(p,"organization"));
+  if(!found.persons.size && !found.phones.size && !found.locations.size && !found.vehicles.size && !found.orgs.size){
+    html += `<span class="empty">No recognizable entities found. Try clearer sentences.</span>`;
+  }
+  html += `</div>`;
+
+  html += `<h3 style="margin-top:16px;">Extracted Relationships</h3>`;
+  if(newRecords.length){
+    html += `<table><thead><tr><th>Subject</th><th>Relationship</th><th>Object</th></tr></thead><tbody>`;
+    newRecords.forEach(r=>{
+      html += `<tr><td>${escapeHtml(r.subject)}</td><td>${escapeHtml(r.relationship)}</td><td>${escapeHtml(r.object)}</td></tr>`;
+    });
+    html += `</tbody></table>`;
+    html += `<div class="btnrow" style="margin-top:12px;"><button class="primary" onclick='addExtractedRecords(${JSON.stringify(newRecords).replace(/'/g,"&#39;")})'>➕ Add These to Investigation Data</button></div>`;
+  } else {
+    html += `<p class="empty">No relationships could be confidently extracted from this text.</p>`;
+  }
+  html += `</div>`;
+  resultBox.innerHTML = html;
+}
+function addExtractedRecords(newRecords){
+  newRecords.forEach(r=>records.push(r));
+  saveData();
+  analyzeData(`${newRecords.length} record(s) added from text analysis.`);
+  goPage('data');
+}
+
+// ---------------------------------------------------------
+// 11. GRAPH RENDERING (vis-network)
+// ---------------------------------------------------------
+function populateFilterOptions(){
+  const typeSel = document.getElementById('filterType');
+  const caseSel = document.getElementById('filterCase');
+  const types = new Set(Object.values(entities).map(e=>e.type));
+  const cases = new Set(Object.values(entities).filter(e=>e.type==="Case").map(e=>e.name));
+  const curType = typeSel.value, curCase = caseSel.value;
+  typeSel.innerHTML = `<option value="">All Entity Types</option>` + Array.from(types).map(t=>`<option value="${t}">${t}</option>`).join("");
+  caseSel.innerHTML = `<option value="">All Cases</option>` + Array.from(cases).map(c=>`<option value="${c}">${c}</option>`).join("");
+  typeSel.value = curType; caseSel.value = curCase;
+}
+
+function colorForType(type){
+  const map = {
+    Person:"#3fd0ff", Phone:"#c69bff", Location:"#7fe0b0",
+    Vehicle:"#ffcb7f", Organization:"#ff9ab5", Case:"#8fc6ff", "Bank Account":"#c3c3ff"
+  };
+  return map[type] || "#aaaaaa";
+}
+
+function renderGraph(){
+  populateFilterOptions();
+  const typeFilter = document.getElementById('filterType').value;
+  const caseFilter = document.getElementById('filterCase').value;
+  const flaggedOnly = document.getElementById('filterFlagged').checked;
+  const flaggedIds = new Set(alerts.filter(a=>a.entity).map(a=>a.entity));
+
+  const nodes = [], edges = [];
+  const seenEdge = new Set();
+
+  Object.values(entities).forEach(e=>{
+    if(typeFilter && e.type !== typeFilter) return;
+    if(caseFilter && !(e.type==="Case" ? e.name===caseFilter : e.cases.has(caseFilter))) return;
+    if(flaggedOnly && !flaggedIds.has(e.id)) return;
+    nodes.push({
+      id: e.id, label: e.name,
+      shape: e.type==="Case" ? "box":"dot",
+      size: e.type==="Case" ? 18 : Math.min(14 + e.connections.size*2, 34),
+      color:{background:colorForType(e.type), border: flaggedIds.has(e.id) ? "#ff5470" : "#0b1220"},
+      borderWidth: flaggedIds.has(e.id) ? 3 : 1,
+      font:{color:"#eaf2ff", size:13}
+    });
+  });
+  const nodeIdSet = new Set(nodes.map(n=>n.id));
+
+  records.forEach((r,idx)=>{
+    if(!r.subject || !r.object) return;
+    const sId = entityId(r.subject, r.subject_type||"Person");
+    const oId = entityId(r.object, r.object_type||"Other");
+    if(!nodeIdSet.has(sId) || !nodeIdSet.has(oId)) return;
+    const key = sId+"->"+oId+":"+r.relationship;
+    if(seenEdge.has(key)) return;
+    seenEdge.add(key);
+    edges.push({from:sId, to:oId, label:r.relationship, font:{color:"#9fb3d1", size:10, strokeWidth:0}, color:{color:"#3a4a6b", highlight:"#3fd0ff"}, arrows:"to"});
+  });
+
+  const data = {nodes:new vis.DataSet(nodes), edges:new vis.DataSet(edges)};
+  const options = {
+    physics:{stabilization:true, barnesHut:{gravitationalConstant:-6000, springLength:120}},
+    interaction:{hover:true, tooltipDelay:100},
+    layout:{improvedLayout:true}
+  };
+  const container = document.getElementById('network');
+  if(!nodes.length){
+    container.innerHTML = `<div class="empty" style="padding-top:220px;">No entities to display. Add data and click Analyze.</div>`;
+    return;
+  }
+  container.innerHTML = "";
+  network = new vis.Network(container, data, options);
+  network.on("click", function(params){
+    if(params.nodes.length){
+      showEntityDetail(params.nodes[0]);
+    }
+  });
+}
+function resetGraphView(){
+  document.getElementById('filterType').value="";
+  document.getElementById('filterCase').value="";
+  document.getElementById('filterFlagged').checked=false;
+  renderGraph();
+  document.getElementById('detailCard').innerHTML = `<h3>Entity Details</h3><p class="empty">Click a node in the graph to see details here.</p>`;
+}
+
+// ---------------------------------------------------------
+// 12. ENTITY DETAIL PANEL
+// ---------------------------------------------------------
+function showEntityDetail(id){
+  selectedEntityId = id;
+  const e = entities[id];
+  if(!e) return;
+  const cases = Array.from(e.cases);
+  const connNames = Array.from(e.connections).map(cid=>entities[cid]?entities[cid].name:cid);
+  const rels = e.relationships.map(r=> r.type==='out' ? `${e.name} ${r.rel} ${r.other}` : `${r.other} ${r.rel} ${e.name}`);
+  const flagged = alerts.filter(a=>a.entity===id);
+
+  document.getElementById('detailCard').innerHTML = `
+    <h3>${escapeHtml(e.name)}</h3>
+    <p><span class="tag ${entityTypeClass(e.type)}">${e.type}</span> &nbsp; <span class="small-muted">ID: ${escapeHtml(e.id)}</span></p>
+    <p class="small-muted">Connections: ${e.connections.size}</p>
+    <b class="small-muted">Cases</b>
+    <div class="chip-row">${cases.length? cases.map(c=>`<span class="chip">${escapeHtml(c)}</span>`).join(""):'<span class="empty">None</span>'}</div>
+    <b class="small-muted" style="display:block;margin-top:10px;">Connected Entities</b>
+    <div class="chip-row">${connNames.length? connNames.map(n=>`<span class="chip">${escapeHtml(n)}</span>`).join(""):'<span class="empty">None</span>'}</div>
+    <b class="small-muted" style="display:block;margin-top:10px;">Relationships</b>
+    <ul style="margin:6px 0 0 18px;padding:0;font-size:12.5px;color:var(--text-1);">
+      ${rels.length ? rels.map(r=>`<li>${escapeHtml(r)}</li>`).join("") : '<li class="empty">None</li>'}
+    </ul>
+    ${flagged.length ? `<div style="margin-top:14px;"><b style="color:var(--warn);">Flags on this entity</b>` +
+      flagged.map(a=>`<div class="small-muted">• ${a.title}</div>`).join("") + `
+      <button class="small" style="margin-top:8px;" onclick="goPage('alerts')">View in Alerts</button></div>` : ""}
+  `;
+}
+
+// ---------------------------------------------------------
+// 13. ENTITIES / CASES PAGES
+// ---------------------------------------------------------
+function renderEntitiesPage(){
+  const box = document.getElementById('entitiesList');
+  const list = Object.values(entities).filter(e=>e.type!=="Case").sort((a,b)=>b.connections.size-a.connections.size);
+  if(!list.length){ box.innerHTML = `<p class="empty">No entities yet. Add data and click Analyze.</p>`; return; }
+  box.innerHTML = list.map(e=>`
+    <div class="list-item" onclick="goPage('network');setTimeout(()=>showEntityDetail('${e.id}'),50);">
+      <div class="left">
+        <b>${escapeHtml(e.name)}</b> <span class="tag ${entityTypeClass(e.type)}">${e.type}</span>
+        <div class="sub">${e.cases.size} case(s) · ${e.connections.size} connection(s)</div>
+      </div>
+      <div>→</div>
+    </div>
+  `).join("");
+}
+
+function renderCasesPage(){
+  const box = document.getElementById('casesList');
+  const caseEnts = Object.values(entities).filter(e=>e.type==="Case");
+  if(!caseEnts.length){ box.innerHTML = `<p class="empty">No cases yet. Add data and click Analyze.</p>`; return; }
+  box.innerHTML = caseEnts.map(c=>{
+    const caseRecords = records.filter(r=>r.case_id===c.name);
+    const relatedEntityIds = new Set();
+    caseRecords.forEach(r=>{
+      relatedEntityIds.add(entityId(r.subject, r.subject_type||"Person"));
+      relatedEntityIds.add(entityId(r.object, r.object_type||"Other"));
+    });
+    // connected cases = other cases sharing an entity
+    const connectedCases = new Set();
+    relatedEntityIds.forEach(eid=>{
+      const ent = entities[eid];
+      if(ent) ent.cases.forEach(cs=>{ if(cs !== c.name) connectedCases.add(cs); });
+    });
+    const important = Array.from(relatedEntityIds)
+      .map(id=>entities[id]).filter(e=>e && e.type!=="Case")
+      .sort((a,b)=>b.connections.size-a.connections.size).slice(0,5);
+
+    return `<div class="card">
+      <h3>Case ${escapeHtml(c.name)}</h3>
+      <p class="small-muted">Entities: ${relatedEntityIds.size} &nbsp;|&nbsp; Relationships: ${caseRecords.length}</p>
+      <b class="small-muted">Connected Cases</b>
+      <div class="chip-row">${connectedCases.size ? Array.from(connectedCases).map(cs=>`<span class="chip">${escapeHtml(cs)}</span>`).join(""):'<span class="empty">None</span>'}</div>
+      <b class="small-muted" style="display:block;margin-top:10px;">Potentially Significant Entities</b>
+      <div class="chip-row">${important.length ? important.map(e=>`<span class="chip">${escapeHtml(e.name)}</span>`).join(""):'<span class="empty">None</span>'}</div>
+    </div>`;
+  }).join("");
+}
+
+// ---------------------------------------------------------
+// 14. ALERTS PAGE
+// ---------------------------------------------------------
+function renderAlertsPage(){
+  const box = document.getElementById('alertsList');
+  if(!alerts.length){ box.innerHTML = `<p class="empty">No alerts. Add more connected data or click Analyze.</p>`; return; }
+  box.innerHTML = alerts.map((a,i)=>`
+    <div class="alert-card ${a.level==='high'?'high':''}">
+      <div class="alert-title">${a.level==='high'?'🔴':'🟡'} ${a.title}</div>
+      <div class="alert-sub">${escapeHtml(a.subtitle)}</div>
+      <button class="small" onclick="toggleEvidence(${i})">Why flagged?</button>
+      <div class="evidence-box" id="evidence-${i}">
+        <b>WHY FLAGGED?</b><br><br>
+        <b>Entity:</b> ${escapeHtml(a.evidence.entity)}<br>
+        <b>Reason:</b> ${escapeHtml(a.evidence.summary)}<br><br>
+        <b>Connected entities:</b> ${a.evidence.connections.length? a.evidence.connections.map(escapeHtml).join(", ") : "None"}<br>
+        <b>Related cases:</b> ${a.evidence.cases.length? a.evidence.cases.map(escapeHtml).join(", ") : "None"}<br><br>
+        <b>Indicator:</b> ${escapeHtml(a.reasonType)}<br>
+        <b>Status:</b> Requires investigator review
+      </div>
+    </div>
+  `).join("");
+}
+function toggleEvidence(i){
+  document.getElementById('evidence-'+i).classList.toggle('show');
+}
+
+// ---------------------------------------------------------
+// 15. GLOBAL SEARCH
+// ---------------------------------------------------------
+function onGlobalSearch(e){
+  const q = e.target.value.trim().toLowerCase();
+  const box = document.getElementById('globalSearchResults');
+  if(!q){ box.innerHTML=""; return; }
+  const matches = Object.values(entities).filter(ent => ent.name.toLowerCase().includes(q)).slice(0,10);
+  if(!matches.length){ box.innerHTML = `<div class="card"><p class="empty">No matches for "${escapeHtml(q)}".</p></div>`; return; }
+  box.innerHTML = `<div class="card"><h3>Search Results</h3>` + matches.map(m=>`
+    <div class="list-item" onclick="goPage('network');setTimeout(()=>showEntityDetail('${m.id}'),50);">
+      <div class="left"><b>${escapeHtml(m.name)}</b> <span class="tag ${entityTypeClass(m.type)}">${m.type}</span></div>
+      <div>→</div>
+    </div>`).join("") + `</div>`;
+}
+
+// ---------------------------------------------------------
+// 16. NAVIGATION
+// ---------------------------------------------------------
+function goPage(name){
+  document.querySelectorAll('.navitem').forEach(el=>el.classList.toggle('active', el.dataset.page===name));
+  document.querySelectorAll('.section').forEach(el=>el.classList.toggle('active', el.id==='page-'+name));
+  if(name==='network') setTimeout(renderGraph, 30);
+  if(name==='entities') renderEntitiesPage();
+  if(name==='cases') renderCasesPage();
+  if(name==='alerts') renderAlertsPage();
+}
+document.querySelectorAll('.navitem').forEach(el=>{
+  el.addEventListener('click', ()=>goPage(el.dataset.page));
+});
+
+// ---------------------------------------------------------
+// 17. MASTER ANALYZE FUNCTION
+// ---------------------------------------------------------
+function setMsg(msg){
+  document.getElementById('dataMsg').textContent = msg || "";
+  if(msg){ setTimeout(()=>{ if(document.getElementById('dataMsg').textContent===msg) document.getElementById('dataMsg').textContent=""; }, 4000); }
+}
+function analyzeData(msg){
+  buildEntities();
+  computeAlerts();
+  renderStats();
+  renderTable();
+  renderEntitiesPage();
+  renderCasesPage();
+  renderAlertsPage();
+  if(document.getElementById('page-network').classList.contains('active')) renderGraph();
+  if(msg) setMsg(msg);
+}
+
+// ---------------------------------------------------------
+// 18. INIT
+// ---------------------------------------------------------
+loadData();
+analyzeData();
+</script>
+</body>
+</html>
